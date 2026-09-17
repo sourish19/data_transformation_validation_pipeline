@@ -9,6 +9,7 @@ raw_data: list[str] = [
        "charlie,35,ceo,150000",
        "david,22,intern,25000",
        "bob,invalid_age,invalid_role,invalid_salary",
+       "levi,37,designer,50000",
    ]
 
 ROLES = ("developer", "designer", "manager", "ceo", "intern")
@@ -57,7 +58,6 @@ def validate_record(line: str,line_num:int):
         "reason": "Invalid age"
       }
 
-
 def process_raw_data(raw_data: list[str]):
     """Return (valid_records, errors, summary_stats)"""
     valid_records: list[dict[str,str|int]] = []
@@ -80,23 +80,57 @@ def process_raw_data(raw_data: list[str]):
         "valid_count": len(valid_records),
         "invalid_count": len(invalid_records)
       }
-
+      
       return (valid_records,invalid_records,summary)
 
     except ValidationError as e:
       print(e)
 
-# def salary_by_role(records: list) -> dict:
-#     """Group records by role"""
-#     pass
+def salary_by_role(records: list[dict[str,str|int]]):
+    """Group records by role"""
+    filtered_records: dict[str,list[dict[str,str|int]]] = {}
 
-# def employees_over_salary(records: list, threshold: float) -> list:
-#     """Filter by salary threshold"""
-#     pass
+    for val in records:
+      role = val["role"]
+
+      if role in filtered_records:
+        filtered_records[role].append(val)
+      else:
+        filtered_records[role] = [val]
+
+    return filtered_records
+
+
+def employees_over_salary(records: list[dict[str,str|int]], threshold: float) -> list:
+    """Filter by salary threshold"""
+    filtered_records = []
+
+    for val in records:
+      salary = val.get("salary")
+
+      if(isinstance(salary,int) and salary <= threshold):
+        filtered_records.append(val)
+
+    return filtered_records
 
 
 def main():
-  print(process_raw_data(raw_data))
+  valid_records, invalid_records, summary = process_raw_data(raw_data)
+
+  print("\n=== Valid Records ===")
+  print(valid_records)
+
+  print("\n=== Invalid Records ===")
+  print(invalid_records)
+
+  print("\n=== Summary ===")
+  print(summary)
+
+  print("\n=== Salary By Role ===")
+  print(salary_by_role(valid_records))
+
+  print("\n=== Employees Under Salary Threshold ===")
+  print(employees_over_salary(valid_records, 60000))
 
 
 if __name__ == "__main__":
