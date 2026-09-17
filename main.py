@@ -1,3 +1,5 @@
+from schemas import Invalid_Records, Summary, Valid_Records
+
 # from csv import raw_data
 
 # simulated CSV as list of strings
@@ -18,7 +20,7 @@ ROLES = ("developer", "designer", "manager", "ceo", "intern")
 class ValidationError(Exception):
     pass
 
-def validate_record(line: str,line_num:int):
+def validate_record(line: str,line_num:int) -> Valid_Records | Invalid_Records:
     """Parse and validate single line & return (name,age,role,salary)"""
     try:
       (name,age,role,salary) = line.split(",",3)
@@ -60,8 +62,8 @@ def validate_record(line: str,line_num:int):
 
 def process_raw_data(raw_data: list[str]):
     """Return (valid_records, errors, summary_stats)"""
-    valid_records: list[dict[str,str|int]] = []
-    invalid_records:list[dict[str, int | str]] = []
+    valid_records: list[Valid_Records] = []
+    invalid_records:list[Invalid_Records] = []
 
     for idx,data in enumerate(raw_data):
       val = validate_record(data,idx)
@@ -75,20 +77,20 @@ def process_raw_data(raw_data: list[str]):
       if(len(invalid_records) / len(raw_data) > 0.5):
         raise ValidationError("More than 50% or records has error")
 
-      summary = {
+      summary:Summary = {
         "total_records": len(raw_data),
         "valid_count": len(valid_records),
         "invalid_count": len(invalid_records)
       }
-      
+
       return (valid_records,invalid_records,summary)
 
     except ValidationError as e:
       print(e)
 
-def salary_by_role(records: list[dict[str,str|int]]):
+def salary_by_role(records: list[Valid_Records]):
     """Group records by role"""
-    filtered_records: dict[str,list[dict[str,str|int]]] = {}
+    filtered_records: dict[str,list[Valid_Records]] = {}
 
     for val in records:
       role = val["role"]
@@ -101,36 +103,39 @@ def salary_by_role(records: list[dict[str,str|int]]):
     return filtered_records
 
 
-def employees_over_salary(records: list[dict[str,str|int]], threshold: float) -> list:
+def employees_over_salary(records: list[Valid_Records], threshold: float):
     """Filter by salary threshold"""
-    filtered_records = []
+    filtered_records:list[Valid_Records] = []
 
     for val in records:
       salary = val.get("salary")
 
-      if(isinstance(salary,int) and salary <= threshold):
+      if( salary <= threshold):
         filtered_records.append(val)
 
     return filtered_records
 
 
 def main():
-  valid_records, invalid_records, summary = process_raw_data(raw_data)
+  result = process_raw_data(raw_data)
 
-  print("\n=== Valid Records ===")
-  print(valid_records)
+  if(result is not None):
+    valid_records, invalid_records, summary = result
 
-  print("\n=== Invalid Records ===")
-  print(invalid_records)
+    print("\n=== Valid Records ===")
+    print(valid_records)
 
-  print("\n=== Summary ===")
-  print(summary)
+    print("\n=== Invalid Records ===")
+    print(invalid_records)
 
-  print("\n=== Salary By Role ===")
-  print(salary_by_role(valid_records))
+    print("\n=== Summary ===")
+    print(summary)
 
-  print("\n=== Employees Under Salary Threshold ===")
-  print(employees_over_salary(valid_records, 60000))
+    print("\n=== Salary By Role ===")
+    print(salary_by_role(valid_records))
+
+    print("\n=== Employees Under Salary Threshold ===")
+    print(employees_over_salary(valid_records, 60000))
 
 
 if __name__ == "__main__":
